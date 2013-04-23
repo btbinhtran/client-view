@@ -172,6 +172,8 @@ Emitter(exports);
 Emitter(statics);
 Emitter(proto);
 
+// XXX: when at least one instance of the view is rendered,
+//      then add the event handler
 function addHandler(event, context) {
   var View = context.constructor;
   $('body').on(event, context.elem, function(evt){
