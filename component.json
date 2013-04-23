@@ -13,7 +13,10 @@
     "visionmedia/mocha": "*"
   },
   "scripts": [
-    "index.js"
+    "index.js",
+    "lib/proto.js",
+    "lib/static.js"
   ],
+  "main": "index.js",
   "license": "MIT"
 }

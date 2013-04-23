@@ -4,7 +4,9 @@
  */
 
 var reactive = require('reactive')
-  , Emitter = require('tower-emitter');
+  , Emitter = require('tower-emitter')
+  , proto = require('./lib/proto')
+  , statics = require('./lib/static');
 
 /**
  * Expose `view`.
@@ -13,68 +15,50 @@ var reactive = require('reactive')
 exports = module.exports = view;
 
 /**
- * Registry of all contexts.
+ * Create or retrieve an existing view.
  *
- * @type {Object}
+ * @param  {String} name View name
  */
 
-exports.contexts = {};
+function view(name) {
+  if (constructors[name]) return constructors[name];
 
-/**
- * Create or retrieve an existing context.
- *
- * @param {String} name
- */
+  /**
+   * Instantiate a new `View`.
+   *
+   * @param {Object} options
+   */
 
-function context(name, parent) {
-  if (!name) throw new Error("You need to specify a name within a context.");
+  function View(options) {
+    this.name = name;
+    this.children = [];
+    this.state = options.state || 'not rendered';
 
-  if (exports.contexts[name]) return exports.contexts[name];
+    if ('body' === this.name) {
+      this.elem = $('body');
+    }
 
-  return exports.contexts[name] = new Context({
-      name: name
-    , parent: parent
-  });
+    View.emit('init', this);
+  }
+
+  for (var key in statics) View[key] = statics[key];
+
+  View.prototype = {};
+  View.prototype.constructor = View;
+
+  for (var key in proto) View.prototype[key] = proto[key];
+
+  View.className = View.id = name;
+
+  View.toString = function(){
+    return 'view("' + name + '")';
+  }
+
+  view.emit('define', View);
+  constructors[name] = View;
+  constructors.push(View);
+  return View;
 }
-
-/**
- * Instantiate a new `Context`.
- *
- * @param {Object} options
- */
-
-function Context(options) {
-  this.name = options.name;
-  this.parent = context(options.parent);
-  this.children = {};
-  this.scope = new Scope();
-}
-
-/**
- * Setter
- */
-
-Context.prototype.set = function() {
-
-};
-
-/**
- * Getter
- */
-
-Context.prototype.get = function() {
-
-};
-
-/**
- * Instantiate a new `Scope`.
- */
-
-function Scope() {
-
-}
-
-//Emitter(Scope.prototype);
 
 /**
  * Registry of all the views.
@@ -82,28 +66,7 @@ function Scope() {
  * @type {Object}
  */
 
-exports.views = {};
-
-/**
- * Create or retrieve an existing view.
- *
- * @param  {String} name View name
- */
-
-function view(name) {
-  if (!name) throw new Error("Views need a name.");
-
-  if (exports.views[name]) return exports.views[name];
-
-  var instance = new View({
-      name: name
-    , state: ('body' === name) ? 'rendered' : 'not rendered'
-  });
-
-  // XXX: view.emit('defined', instance);
-
-  return exports.views[name] = instance;
-}
+var constructors = exports.constructors = [];
 
 /**
  * Initialize the client-side views. This means we have
@@ -192,66 +155,9 @@ view.init = function(){
 };
 
 /**
- * Instantiate a new `View`.
- *
- * @param {Object} options
+ * Mixin `Emitter`.
  */
 
-function View(options) {
-  this.name = options.name;
-  this.children = [];
-  this.state = options.state || 'not rendered';
-  this.elem = null;
-
-  if ('body' === this.name) {
-    this.elem = $('body');
-  }
-}
-
-Emitter(View.prototype);
-
-/**
- * Create a new child view.
- *
- * @param {String} name View name
- */
-
-View.prototype.child = function(name){
-  if (this.children[name]) return this;
-  this.children.push(this.children[name] = view(name));
-  return this;
-};
-
-/**
- * Return true if the view has any child views
- *
- * @return {Boolean}
- */
-
-View.prototype.hasChildren = function(){
-  return this.children.length;
-}
-
-/**
- * Set or get the current state
- *
- * @param {String} state
- * @return {View}
- */
-
-View.prototype._state = function(state){
-  this.state = state;
-  return this;
-};
-
-/**
- * Swap a view with another view.
- *
- * @param {String} from View to swap
- * @param {String} to   View to replace with.
- */
-
-View.prototype.swap = function(from, to){
-  this.children[from] = view(to);
-  return this;
-};
+Emitter(exports);
+Emitter(statics);
+Emitter(proto);
