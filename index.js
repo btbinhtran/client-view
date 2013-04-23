@@ -45,6 +45,9 @@ function view(name) {
     }
 
     View.emit('init', this);
+
+    if ('rendered' === this.state)
+      View.emit('render', this);
   }
 
   for (var key in statics) View[key] = statics[key];
