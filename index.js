@@ -177,6 +177,7 @@ Emitter(proto);
 function addHandler(event, context) {
   var View = context.constructor;
   $('body').on(event, context.elem, function(evt){
-    View.emit(event, context, evt);
+    evt.context = context;
+    View.emit(event, evt);
   });
 }
