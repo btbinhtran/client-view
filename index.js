@@ -6,7 +6,9 @@
 var reactive = require('reactive')
   , Emitter = require('tower-emitter')
   , proto = require('./lib/proto')
-  , statics = require('./lib/static');
+  , statics = require('./lib/static')
+  // each = require('part-each-object')
+  , id = 0;
 
 /**
  * Expose `view`.
@@ -30,12 +32,16 @@ function view(name) {
    */
 
   function View(options) {
+    options || (options = {});
+    this.id = id++;
     this.name = name;
     this.children = [];
     this.state = options.state || 'not rendered';
+    this.elem = options.elem;
+    View.instances[this.id] = this;
 
-    if ('body' === this.name) {
-      this.elem = $('body');
+    for (var event in View._callbacks) {
+      addHandler(event, this);
     }
 
     View.emit('init', this);
@@ -45,6 +51,9 @@ function view(name) {
 
   View.prototype = {};
   View.prototype.constructor = View;
+  View.instances = {};
+  // for `Emitter`.
+  View._callbacks = {};
 
   for (var key in proto) View.prototype[key] = proto[key];
 
@@ -121,7 +130,9 @@ view.init = function(){
     var elem = $(this)
       , name = elem.attr('name');
 
-    view(name)._state('not rendered');
+    // view(name)._state('not rendered');
+
+    // template
     view(name).elem = elem;
   });
 
@@ -130,8 +141,7 @@ view.init = function(){
       , name = elem.attr('view');
 
     // Set the state to `rendered`
-    view(name)._state('rendered');
-    view(name).elem = elem;
+    view(name).create({ state: 'rendered', elem: elem });
   });
 
   var bodyView = view('body');
@@ -161,3 +171,10 @@ view.init = function(){
 Emitter(exports);
 Emitter(statics);
 Emitter(proto);
+
+function addHandler(event, context) {
+  var View = context.constructor;
+  $('body').on(event, context.elem, function(evt){
+    View.emit(event, context, evt);
+  });
+}

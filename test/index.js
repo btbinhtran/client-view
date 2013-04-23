@@ -3,6 +3,10 @@ var view = 'undefined' == typeof window ? require('..') : require('tower-view')
 
 describe('client view', function(){
   it('should render', function(){
-    assert('rendered' === view('body').state);
+    view('body').on('click', function(context){
+      console.log('clicked body!');
+    });
+    view.init();
+    assert('rendered' === view('body')[0]);
   });
 });
