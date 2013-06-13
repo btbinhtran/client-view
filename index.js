@@ -33,7 +33,7 @@ exports.compile = compile;
  * Compile a DOM element's directives to a function.
  *
  * @param {String} name The template's name.
- * @param {HTMLNode} node The HTML node.
+ * @param {DOMNode} node The DOM node.
  * @return {Function} The compiled template function.
  * @api public
  */
@@ -51,8 +51,8 @@ function template(name, node) {
  * Traverse `node` and children recursively,
  * and collect and execute directives.
  *
- * @param {HTMLNode} node
- * @param {Content} scope
+ * @param {DOMNode} node The DOM node.
+ * @param {Content} scope The current content.
  * @return {Function} The compiled template function.
  */
 
